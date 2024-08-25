@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>게시판</title>
+    <style>
+
+    </style>
+    <script th:src="@{/js/jquery-3.7.1.min.js}"></script>
+    <script>
+
+        $(document).ready(function () {
+            function updateReply() {
+                let boardNum = [[${board.id}]]; // boardNum을 전역으로 확장
+                $.ajax({
+                    url: '/reply/list?boardNum=' + boardNum,
+                    type: 'get',
+                    dataType: 'json',
+                    success: function (response) {
+                        let replyTable = '';  // 새로운 댓글 목록 HTML 초기화
+                        response.forEach(function (reply, i) {
+                            replyTable += `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${reply.writer}</td>
+                            <td>${reply.replyText}</td>
+                            <td>
+                              <button id="deleteReplyBtn" data-id="${reply.id}">삭제</button>
+                            </td>
+                        </tr>
+                    `;
+                        });
+                        $('#replyList').html(replyTable);  // 기존 댓글 목록을 삭제하고 새로운 목록으로 덮어쓰기
+                    },
+                    error: function (e) {
+                        console.error(e);  // 오류 시 콘솔에 오류 출력
+                    }
+                });
+            }
+
+            $('#replyBtn').on('click', function () {
+                let replyText = $('#replyText').val();  // 댓글 내용 가져오기
+                let boardNum = [[${board.id}]];  // Thymeleaf를 통해 게시물 ID 가져오기
+                $.ajax({
+                    url: '/reply/write',
+                    type: 'post',
+                    data: {
+                        boardNum: boardNum,
+                        replyText: replyText  // 서버에 전송할 데이터
+                    },
+                    success: function (response) {
+                        updateReply();  // 댓글 목록 업데이트 호출
+                    },
+                    error: function (e) {
+                        console.error(e);  // 오류 시 콘솔에 오류 출력
+                    }
+                });
+            });
+
+            // 동적으로 생성된 요소에 대해 이벤트 핸들러 설정
+            $(document).on('click', '#deleteReplyBtn', function () {
+                let replyId = $(this).data('id');
+                let boardNum = [[${board.id}]];
+                $.ajax({
+                    url: '/reply/delete?boardNum=' + boardNum + '&replyId=' + replyId,
+                    type: 'get',
+                    success: function () {
+                        updateReply();  // 삭제 후 댓글 목록 업데이트
+                    },
+                    error: function () {
+                        alert('댓글은 작성자만 삭제 가능합니다.');
+                    }
+                });
+            });
+
+            $(document).on('click', '#deleteBtn', function () {
+                let boardNum = [[${board.id}]];  // Thymeleaf를 통해 게시물 ID 가져오기
+                location.href = '/board/delete?boardNum=' + boardNum;
+            });
+
+            $(document).on('click', '#buyBtn', function () {
+                let boardNum = [[${board.id}]];  // Thymeleaf를 통해 게시물 ID 가져오기
+                location.href = '/board/buy?boardNum=' + boardNum;
+            });
+            // 페이지 로드 시 댓글 목록 초기화
+            updateReply();
+        });
+    </script>
+</head>
+<body>
+<h1>[ 판매상품 상세보기 ]</h1>
+
+<table>
+    <tr>
+        <th>번호</th>
+        <td th:text="${board.id}"></td>
+    </tr>
+    <tr>
+        <th>판매자</th>
+        <td th:text="${board.writer}"></td>
+    </tr>
+    <tr>
+        <th>카테고리</th>
+        <td th:text="${board.category}"></td>
+    </tr>
+    <tr>
+        <th>제목</th>
+        <td th:text="${board.title}"></td>
+    </tr>
+    <tr>
+        <th>내용</th>
+        <td th:text="${board.contents}"></td>
+    </tr>
+    <tr>
+        <th>판매가격</th>
+        <td th:text="${board.price}"></td>
+    </tr>
+    <tr>
+        <th>상태</th>
+        <td>
+            <span th:if="${board.soldout}" th:text="'판매완료'">판매완료</span>
+            <span th:unless="${board.soldout}" th:text="'판매중'">판매중</span>
+        </td>
+    </tr>
+    <tr>
+        <th>구매자</th>
+        <td th:text="${board.buyer}"></td>
+    </tr>
+    <tr th:if="${board.writer == #authentication.name}">
+        <td>
+            <button id="deleteBtn">삭제하기</button>
+        </td>
+    </tr>
+    <tr th:if="${!board.soldout and (board.writer != #authentication.name)}">
+        <td>
+            <button id="buyBtn">구매하기</button>
+        </td>
+    </tr>
+</table>
+
+<div>
+    <label>리플 입력</label>
+    <input type="text" id="replyText">
+    <button id="replyBtn">저장</button>
+</div>
+
+<table id="replyList"></table>
+
+</body>
+</html>

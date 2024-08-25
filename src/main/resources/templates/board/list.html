@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>게시판</title>
+    <style>
+    </style>
+    <script th:src="@{/js/jquery-3.7.1.min.js}"></script>
+    <script>
+        $(document).ready(function () {
+            function loadBoardList(category, searchWord) {
+                $.ajax({
+                    url: '/ajax/board/list',
+                    type: 'get',
+                    dataType: 'json',
+                    data: {
+                        category: category,
+                        searchWord: searchWord
+                    },
+                    success: function (response) {
+                        let boardTable = '';  // 새로운 게시판 목록 HTML 초기화
+                        response.forEach(function (board) {
+                            boardTable += `
+                                <tr>
+                                    <td>${board.id}</td>
+                                    <td>${board.soldout ? '판매완료' : '판매중'}</td>
+                                    <td>${board.category}</td>
+                                    <td>
+                                        <a href="/board/read/${board.id}">${board.title}</a>
+                                    </td>
+                                    <td>${board.price}</td>
+                                    <td>${board.writer}</td>
+                                    <td>${board.inputDate}</td>
+                                </tr>
+                            `;
+                        });
+                        $('table').html(`
+                            <tr>
+                                <th>번호</th>
+                                <th>상태</th>
+                                <th>카테고리</th>
+                                <th>제목</th>
+                                <th>판매가격</th>
+                                <th>작성자</th>
+                                <th>작성일</th>
+                            </tr>
+                            ${boardTable}
+                        `);  // 테이블 업데이트
+                    },
+                    error: function (e) {
+                        console.error('데이터 로드 실패:', e);  // 오류 시 콘솔에 오류 출력
+                    }
+                });
+            }
+
+            // category나 searchWord 변경 시 호출될 함수
+            function onFilterChange() {
+                let category = $('#category').val();
+                let searchWord = $('#searchWord').val();
+                loadBoardList(category, searchWord);
+            }
+
+            // 이벤트 핸들러 설정
+            $('#category').on('change', onFilterChange);
+            $('#searchWord').on('input', onFilterChange);  // input 이벤트 사용
+            });
+    </script>
+</head>
+<body>
+<h1>[ 거래 게시판 ]</h1>
+<button><a th:href="@{/board/write}">글쓰기</a></button>
+
+<div>
+    <label>검색조건</label>
+    <select name="category" id="category">
+        <option disabled hidden selected>전체 카테고리 보기</option>
+        <option value="컴퓨터">컴퓨터</option>
+        <option value="카메라">카메라</option>
+        <option value="자동차">자동차</option>
+    </select>
+    <input type="text" name="searchWord" id="searchWord">
+
+    <table>
+        <tr>
+            <th>번호</th>
+            <th>상태</th>
+            <th>카테고리</th>
+            <th>제목</th>
+            <th>판매가격</th>
+            <th>작성자</th>
+            <th>작성일</th>
+        </tr>
+
+        <tr th:each="board: ${boardList}">
+            <td th:text="${board.id}"></td>
+            <td th:text="${board.soldout} ? '판매완료' : '판매중'"></td>
+            <td th:text="${board.category}"></td>
+            <td>
+                <a th:href="@{/board/read(boardNum=${board.id})}" th:text="${board.title}"></a>
+            </td>
+            <td th:text="${board.price}"></td>
+            <td th:text="${board.writer}"></td>
+            <td th:text="${#temporals.format(board.inputDate, 'yyyy-MM-dd HH:mm')}"></td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>
