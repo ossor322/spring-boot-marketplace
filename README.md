@@ -8,7 +8,7 @@
 
 ##  ERD
 
-![[images/market_erd.png]]
+![erd](images/market_erd.png)
 ## 機能
 
 - **会員登録およびログイン/ログアウト**: Spring Securityを使用した認証および権限管理
