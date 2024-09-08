@@ -44,3 +44,6 @@ CREATE TABLE market_reply
     FOREIGN KEY (board_num) REFERENCES market_board (board_num),
     FOREIGN KEY (member_id) REFERENCES market_member (member_id)
 );
+
+use mydb;
+select * from market_member;
